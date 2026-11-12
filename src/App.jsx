@@ -1,86 +1,128 @@
-/**
- * COMPONENTE PRINCIPAL: App
- */
-
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import Login from './pages/Login';
 import MainLayout from './components/layout/MainLayout';
+import Icon from './components/layout/Icon';
 import Clients from './pages/Clients';
 import Vehicles from './pages/Vehicles';
 import ServiceOrders from './pages/ServiceOrders';
-import { isAuthenticated, getCurrentUser, initializeLocalStorage, logoutUser } from './services/localStorageService';
+import {
+  getCurrentUser,
+  initializeLocalStorage,
+  isAuthenticated,
+  loadData,
+  logoutUser,
+  STORAGE_KEYS
+} from './services/localStorageService';
+
+const pageLabels = {
+  dashboard: 'Visão geral',
+  clients: 'Clientes',
+  vehicles: 'Veículos',
+  serviceOrders: 'Ordens de serviço',
+  reports: 'Relatórios'
+};
 
 function App() {
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState(() => {
+    initializeLocalStorage();
+    return isAuthenticated() ? getCurrentUser() : null;
+  });
   const [activePage, setActivePage] = useState('dashboard');
 
-  useEffect(() => {
-    initializeLocalStorage();
-    
-    if (isAuthenticated()) {
-      const currentUser = getCurrentUser();
-      setUser(currentUser);
-    }
-  }, []);
-
-  const handleLogin = (userData) => {
-    setUser(userData);
-  };
+  const handleLogin = (userData) => setUser(userData);
 
   const handleLogout = () => {
     logoutUser();
     setUser(null);
   };
 
-  const handlePageChange = (page) => {
-    setActivePage(page);
-  };
-
   if (!user) {
     return <Login onLogin={handleLogin} />;
   }
+
+  const vehicles = loadData(STORAGE_KEYS.VEHICLES);
+  const orders = loadData(STORAGE_KEYS.SERVICE_ORDERS);
+  const openOrders = orders.filter((order) => order.status !== 'concluida');
+  const completedOrders = orders.filter((order) => order.status === 'concluida');
 
   const renderContent = () => {
     switch (activePage) {
       case 'dashboard':
         return (
-          <div className="bg-white rounded-lg shadow-lg p-4 md:p-8">
-            <h2 className="text-xl md:text-2xl font-bold text-gray-800 mb-4">
-              📋 Dashboard
-            </h2>
-            <p className="text-gray-600 mb-6 text-sm md:text-base">
-              Bem-vindo ao Sistema de Gestão da Oficina Mecânica
-            </p>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
-              <div 
-                onClick={() => setActivePage('clients')}
-                className="bg-blue-50 p-3 md:p-4 rounded-lg text-center hover:bg-blue-100 cursor-pointer transition-colors"
-              >
-                <div className="text-xl md:text-2xl mb-1 md:mb-2">👥</div>
-                <div className="font-semibold text-sm md:text-base">Clientes</div>
+          <div className="dashboard-page">
+            <section className="welcome-banner">
+              <div className="welcome-copy">
+                <span className="eyebrow eyebrow-light">
+                  <Icon name="spark" size={14} />
+                  SEU CENTRO DE OPERAÇÕES
+                </span>
+                <h1>Bom trabalho, {user.name?.split(' ')[0] || 'equipe'}.</h1>
+                <p>Uma oficina bem gerenciada faz todo serviço avançar.</p>
+                <button className="welcome-action" onClick={() => setActivePage('serviceOrders')}>
+                  Acompanhar ordens
+                  <Icon name="arrow" size={17} />
+                </button>
               </div>
-              <div 
-                onClick={() => setActivePage('vehicles')}
-                className="bg-green-50 p-3 md:p-4 rounded-lg text-center hover:bg-green-100 cursor-pointer transition-colors"
-              >
-                <div className="text-xl md:text-2xl mb-1 md:mb-2">🚗</div>
-                <div className="font-semibold text-sm md:text-base">Veículos</div>
+              <div className="welcome-art" aria-hidden="true">
+                <div className="welcome-art-ring" />
+                <Icon name="vehicle" size={118} />
+                <span className="welcome-art-spark"><Icon name="wrench" size={25} /></span>
               </div>
-              <div 
-                onClick={() => setActivePage('serviceOrders')}
-                className="bg-yellow-50 p-3 md:p-4 rounded-lg text-center hover:bg-yellow-100 cursor-pointer transition-colors"
-              >
-                <div className="text-xl md:text-2xl mb-1 md:mb-2">📝</div>
-                <div className="font-semibold text-sm md:text-base">OS</div>
+              <span className="welcome-index" aria-hidden="true">01 / OFICINA</span>
+            </section>
+
+            <div className="section-heading">
+              <div>
+                <span className="eyebrow">ACOMPANHAMENTO</span>
+                <h2>Panorama da oficina</h2>
               </div>
-              <div 
-                onClick={() => setActivePage('reports')}
-                className="bg-purple-50 p-3 md:p-4 rounded-lg text-center hover:bg-purple-100 cursor-pointer transition-colors"
-              >
-                <div className="text-xl md:text-2xl mb-1 md:mb-2">📊</div>
-                <div className="font-semibold text-sm md:text-base">Relatórios</div>
+              <span className="live-indicator"><span /> Dados do espaço de trabalho</span>
+            </div>
+
+            <section className="metrics-grid" aria-label="Resumo da oficina">
+              <article className="metric-card">
+                <span className="metric-icon metric-icon-lime"><Icon name="clipboard" size={20} /></span>
+                <span className="metric-label">Ordens em aberto</span>
+                <strong className="metric-value">{openOrders.length.toString().padStart(2, '0')}</strong>
+                <span className="metric-note">Aguardando ou em andamento</span>
+              </article>
+              <article className="metric-card">
+                <span className="metric-icon metric-icon-orange"><Icon name="vehicle" size={20} /></span>
+                <span className="metric-label">Veículos cadastrados</span>
+                <strong className="metric-value">{vehicles.length.toString().padStart(2, '0')}</strong>
+                <span className="metric-note">Na base da sua oficina</span>
+              </article>
+              <article className="metric-card">
+                <span className="metric-icon metric-icon-blue"><Icon name="check" size={20} /></span>
+                <span className="metric-label">Serviços concluídos</span>
+                <strong className="metric-value">{completedOrders.length.toString().padStart(2, '0')}</strong>
+                <span className="metric-note">Ordens finalizadas</span>
+              </article>
+            </section>
+
+            <div className="section-heading section-heading-actions">
+              <div>
+                <span className="eyebrow">ACESSO RÁPIDO</span>
+                <h2>O que vamos organizar?</h2>
               </div>
             </div>
+            <section className="shortcut-grid" aria-label="Atalhos">
+              <button className="shortcut-card" onClick={() => setActivePage('serviceOrders')}>
+                <span className="shortcut-icon shortcut-icon-lime"><Icon name="clipboard" size={22} /></span>
+                <span className="shortcut-copy"><strong>Ordens de serviço</strong><small>Gerencie serviços e acompanhe cada etapa.</small></span>
+                <Icon name="arrow" size={18} className="shortcut-arrow" />
+              </button>
+              <button className="shortcut-card" onClick={() => setActivePage('vehicles')}>
+                <span className="shortcut-icon shortcut-icon-orange"><Icon name="vehicle" size={22} /></span>
+                <span className="shortcut-copy"><strong>Veículos</strong><small>Consulte e atualize os veículos cadastrados.</small></span>
+                <Icon name="arrow" size={18} className="shortcut-arrow" />
+              </button>
+              <button className="shortcut-card" onClick={() => setActivePage('clients')}>
+                <span className="shortcut-icon shortcut-icon-blue"><Icon name="users" size={22} /></span>
+                <span className="shortcut-copy"><strong>Clientes</strong><small>Mantenha sua carteira sempre organizada.</small></span>
+                <Icon name="arrow" size={18} className="shortcut-arrow" />
+              </button>
+            </section>
           </div>
         );
       case 'clients':
@@ -89,42 +131,31 @@ function App() {
         return <Vehicles />;
       case 'serviceOrders':
         return <ServiceOrders />;
-      default:
+      case 'reports':
         return (
-          <div className="bg-white rounded-lg shadow-lg p-4 md:p-8">
-            <h2 className="text-xl md:text-2xl font-bold text-gray-800 mb-4">
-              Em desenvolvimento
-            </h2>
-            <p className="text-gray-600 text-sm md:text-base">
-              Esta página será implementada em breve.
-            </p>
-          </div>
+          <section className="page-panel empty-state reports-empty">
+            <span className="empty-icon"><Icon name="chart" size={28} /></span>
+            <span className="eyebrow">EM PREPARAÇÃO</span>
+            <h2>Relatórios da oficina</h2>
+            <p>Este espaço está reservado para os indicadores e relatórios da operação.</p>
+            <button className="action-secondary" onClick={() => setActivePage('dashboard')}>Voltar ao início</button>
+          </section>
         );
+      default:
+        return null;
     }
   };
 
   return (
-    <div 
-      className="min-h-screen"
-      style={{
-        backgroundImage: `url('https://img.magnific.com/fotos-premium/uma-oficina-bem-organizada-com-ferramentas-e-armazenamento-para-varios-projetos_1286777-23676.jpg?semt=ais_hybrid&w=740&q=80')`,
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-        backgroundRepeat: 'no-repeat',
-        backgroundAttachment: 'fixed'
-      }}
+    <MainLayout
+      userName={user.name}
+      activePage={activePage}
+      pageTitle={pageLabels[activePage] || 'Oficina'}
+      onLogout={handleLogout}
+      onPageChange={setActivePage}
     >
-      <div className="min-h-screen bg-black bg-opacity-40">
-        <MainLayout
-          userName={user.name}
-          onLogout={handleLogout}
-          activePage={activePage}
-          onPageChange={handlePageChange}
-        >
-          {renderContent()}
-        </MainLayout>
-      </div>
-    </div>
+      {renderContent()}
+    </MainLayout>
   );
 }
 

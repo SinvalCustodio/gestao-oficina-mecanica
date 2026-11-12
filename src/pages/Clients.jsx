@@ -1,14 +1,8 @@
-/**
- * PÁGINA: Clientes
- * 
- * Gerencia o CRUD (Create, Read, Update, Delete) de clientes
- * Conectado à API Spring Boot
- */
-
-import { useState, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import ClientCard from '../components/clients/ClientCard';
 import ClientForm from '../components/clients/ClientForm';
-import { clienteService } from '../services/api'; // Importando nossa API
+import Icon from '../components/layout/Icon';
+import { clienteService } from '../services/api';
 
 const Clients = () => {
   const [clients, setClients] = useState([]);
@@ -18,28 +12,38 @@ const Clients = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [message, setMessage] = useState({ text: '', type: '' });
 
-  // Carrega os clientes quando a tela abre
-  useEffect(() => {
-    loadClients();
+  const showMessage = useCallback((text, type = 'success') => {
+    setMessage({ text, type });
+    setTimeout(() => setMessage({ text: '', type: '' }), 3000);
   }, []);
 
-  // Função que busca os dados da API
-  const loadClients = async () => {
+  const loadClients = useCallback(async () => {
     try {
-      setIsLoading(true);
-      const data = await clienteService.listar();
-      setClients(data);
-    } catch (error) {
-      showMessage('❌ Erro ao carregar clientes. O backend está rodando?', 'error');
+      setClients(await clienteService.listar());
+    } catch {
+      showMessage('Não foi possível carregar os clientes. Verifique a conexão com o servidor.', 'error');
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [showMessage]);
 
-  const showMessage = (text, type = 'success') => {
-    setMessage({ text, type });
-    setTimeout(() => setMessage({ text: '', type: '' }), 3000);
-  };
+  useEffect(() => {
+    let isCurrent = true;
+    clienteService.listar()
+      .then((data) => {
+        if (isCurrent) setClients(data);
+      })
+      .catch(() => {
+        if (isCurrent) showMessage('Não foi possível carregar os clientes. Verifique a conexão com o servidor.', 'error');
+      })
+      .finally(() => {
+        if (isCurrent) setIsLoading(false);
+      });
+
+    return () => {
+      isCurrent = false;
+    };
+  }, [showMessage]);
 
   const handleNewClient = () => {
     setEditingClient(null);
@@ -51,112 +55,85 @@ const Clients = () => {
     setShowForm(true);
   };
 
-  // Chamado pelo ClientForm quando o formulário é submetido com sucesso
-  const handleSaveClient = async () => {
-    showMessage(editingClient ? '✅ Cliente atualizado com sucesso!' : '✅ Cliente cadastrado com sucesso!', 'success');
+  const handleSaveClient = () => {
+    showMessage(editingClient ? 'Cliente atualizado com sucesso.' : 'Cliente cadastrado com sucesso.');
     setShowForm(false);
     setEditingClient(null);
-    loadClients(); // Recarrega a lista para mostrar a atualização
+    loadClients();
   };
 
-  // Função para excluir cliente
   const handleDeleteClient = async (id) => {
-    if (window.confirm('⚠️ Tem certeza que deseja excluir este cliente?\nEsta ação não pode ser desfeita.')) {
-      try {
-        await clienteService.excluir(id);
-        showMessage('🗑️ Cliente removido com sucesso!', 'warning');
-        loadClients(); // Recarrega a lista
-      } catch (error) {
-        showMessage('❌ Erro ao excluir cliente.', 'error');
-      }
+    if (!window.confirm('Tem certeza que deseja excluir este cliente? Esta ação não pode ser desfeita.')) return;
+
+    try {
+      await clienteService.excluir(id);
+      showMessage('Cliente removido com sucesso.', 'warning');
+      loadClients();
+    } catch {
+      showMessage('Não foi possível excluir o cliente. Tente novamente.', 'error');
     }
   };
 
-  // Filtro de busca adaptado para os nomes em português do Backend (nome, email, telefone)
-  const filteredClients = clients.filter(client =>
-    client.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    client.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (client.telefone && client.telefone.includes(searchTerm))
+  const normalizedSearch = searchTerm.toLowerCase();
+  const filteredClients = clients.filter((client) =>
+    client.nome?.toLowerCase().includes(normalizedSearch) ||
+    client.email?.toLowerCase().includes(normalizedSearch) ||
+    client.telefone?.includes(searchTerm)
   );
+  const noticeClass = message.type === 'error' ? 'notice-error' : message.type === 'warning' ? 'notice-warning' : 'notice-success';
 
   return (
-    <div className="bg-white rounded-lg shadow-lg overflow-hidden">
-      <div className="bg-gradient-to-r from-blue-600 to-blue-700 px-4 py-4 md:px-6 md:py-4">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+    <section className="page-shell">
+      <header className="page-heading">
+        <div className="page-heading-copy">
+          <span className="page-heading-icon"><Icon name="users" size={20} /></span>
           <div>
-            <h2 className="text-xl md:text-2xl font-bold text-white">👥 Clientes</h2>
-            <p className="text-blue-100 text-xs md:text-sm mt-1">
-              Gerencie todos os clientes da sua oficina
-            </p>
+            <h1>Clientes</h1>
+            <p>Seu relacionamento com cada cliente, em um só lugar.</p>
           </div>
-          <button
-            onClick={handleNewClient}
-            className="bg-green-500 hover:bg-green-600 text-white px-3 py-2 md:px-4 md:py-2 rounded-lg transition-colors flex items-center gap-2 text-sm md:text-base"
-          >
-            <span className="text-xl">+</span>
-            Novo Cliente
-          </button>
         </div>
+        <button className="action-primary" onClick={handleNewClient}><Icon name="plus" size={17} /> Novo cliente</button>
+      </header>
+
+      <div className="page-toolbar">
+        <label className="search-field">
+          <Icon name="search" size={16} />
+          <input
+            type="search"
+            placeholder="Buscar por nome, e-mail ou telefone..."
+            aria-label="Buscar clientes"
+            value={searchTerm}
+            onChange={(event) => setSearchTerm(event.target.value)}
+          />
+        </label>
+        <span className="page-count">Exibindo <strong>{filteredClients.length}</strong> de <strong>{clients.length}</strong></span>
       </div>
-      
-      <div className="px-4 py-3 md:px-6 md:py-4 bg-gray-50 border-b">
-        <div className="flex flex-col sm:flex-row justify-between items-center gap-3">
-          <div className="relative w-full sm:w-80">
-            <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">🔍</span>
-            <input
-              type="text"
-              placeholder="Buscar por nome, email ou telefone..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 text-sm"
-            />
-          </div>
-          <div className="text-sm text-gray-600">
-            📊 Total: {filteredClients.length} cliente(s)
-            {searchTerm && ` | Filtrado de ${clients.length}`}
-          </div>
-        </div>
-      </div>
-      
-      {message.text && (
-        <div className={`px-4 md:px-6 py-3 text-sm ${
-          message.type === 'success' ? 'bg-green-100 text-green-700' : 
-          message.type === 'warning' ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700'
-        }`}>
-          {message.text}
-        </div>
-      )}
-      
-      <div className="p-4 md:p-6">
+
+      {message.text && <div className={`notice ${noticeClass}`} role="status">{message.text}</div>}
+
+      <div className="page-content">
         {isLoading ? (
-          <div className="text-center py-12">
-            <div className="inline-block animate-spin text-3xl">⏳</div>
-            <p className="text-gray-500 mt-2">Carregando clientes...</p>
-          </div>
+          <div className="empty-state" aria-live="polite"><span className="eyebrow">AGUARDE UM INSTANTE</span><h2>Carregando clientes</h2></div>
         ) : filteredClients.length === 0 ? (
-          <div className="text-center py-12">
-            <div className="text-6xl mb-4">📭</div>
-            <h3 className="text-lg md:text-xl font-semibold text-gray-600 mb-2">
-              {searchTerm ? 'Nenhum cliente encontrado' : 'Nenhum cliente cadastrado'}
-            </h3>
-            <p className="text-gray-500 text-sm">
-              {searchTerm ? 'Tente outro termo de busca' : 'Clique no botão "Novo Cliente" para começar'}
-            </p>
+          <div className="empty-state">
+            <span className="empty-icon"><Icon name={searchTerm ? 'search' : 'users'} size={23} /></span>
+            <h2>{searchTerm ? 'Nenhum cliente encontrado' : 'Sua lista começa aqui'}</h2>
+            <p>{searchTerm ? 'Tente outra busca ou limpe o filtro.' : 'Cadastre o primeiro cliente da sua oficina.'}</p>
+            {searchTerm ? (
+              <button className="action-secondary" onClick={() => setSearchTerm('')}>Limpar busca</button>
+            ) : (
+              <button className="action-primary" onClick={handleNewClient}><Icon name="plus" size={16} /> Cadastrar cliente</button>
+            )}
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="record-grid">
             {filteredClients.map((client) => (
-              <ClientCard
-                key={client.id}
-                client={client} // O ClientCard vai receber o cliente (com nome, email, etc.)
-                onEdit={handleEditClient}
-                onDelete={handleDeleteClient}
-              />
+              <ClientCard key={client.id} client={client} onEdit={handleEditClient} onDelete={handleDeleteClient} />
             ))}
           </div>
         )}
       </div>
-      
+
       {showForm && (
         <ClientForm
           initialData={editingClient}
@@ -167,7 +144,7 @@ const Clients = () => {
           }}
         />
       )}
-    </div>
+    </section>
   );
 };
 

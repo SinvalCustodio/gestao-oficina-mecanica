@@ -3,37 +3,25 @@
  * Formulário para cadastrar ou editar um cliente conectado à API Spring Boot
  */
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { validateEmail, validateRequired } from '../../utils/validators';
 import { clienteService } from '../../services/api';
+import Icon from '../layout/Icon';
 
 const ClientForm = ({ initialData, onSubmit, onCancel }) => {
   // Estados do formulário (ajustados para os nomes que o Backend espera)
-  const [formData, setFormData] = useState({
-    nome: '',
-    email: '',
-    telefone: '',
-    tipo: 'PARTICULAR',
-    endereco: ''
-  });
+  const [formData, setFormData] = useState(() => ({
+    nome: initialData?.nome || '',
+    email: initialData?.email || '',
+    telefone: initialData?.telefone || '',
+    tipo: initialData?.tipo || 'PARTICULAR',
+    endereco: initialData?.endereco || ''
+  }));
   
   // Estados de validação e controle
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [apiError, setApiError] = useState(null); // Para erros vindos do Spring Boot
-
-  // Se tiver dados iniciais (edição), preenche o formulário
-  useEffect(() => {
-    if (initialData) {
-      setFormData({
-        nome: initialData.nome || '',
-        email: initialData.email || '',
-        telefone: initialData.telefone || '',
-        tipo: initialData.tipo || 'PARTICULAR',
-        endereco: initialData.endereco || ''
-      });
-    }
-  }, [initialData]);
 
   // Atualiza um campo específico do formulário
   const handleChange = (e) => {
@@ -93,20 +81,21 @@ const ClientForm = ({ initialData, onSubmit, onCancel }) => {
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-md max-h-screen overflow-y-auto">
-        {/* Cabeçalho */}
-        <div className={`px-6 py-4 ${initialData ? 'bg-yellow-500' : 'bg-blue-500'} text-white`}>
-          <h3 className="text-lg font-semibold">
-            {initialData ? '✏️ Editar Cliente' : '➕ Novo Cliente'}
-          </h3>
+    <div className="dialog-overlay">
+      <div className="dialog-panel" role="dialog" aria-modal="true" aria-labelledby="client-form-title">
+        <div className="dialog-header">
+          <span className="dialog-header-mark"><Icon name="users" size={18} /></span>
+          <div>
+            <h3 id="client-form-title">{initialData ? 'Editar cliente' : 'Novo cliente'}</h3>
+            <p>Preencha os dados para manter tudo organizado.</p>
+          </div>
         </div>
         
         {/* Formulário */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+        <form onSubmit={handleSubmit} className="dialog-form">
           
           {apiError && (
-            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative">
+            <div className="form-error" role="alert">
               <span className="block sm:inline">{apiError}</span>
             </div>
           )}
@@ -191,18 +180,18 @@ const ClientForm = ({ initialData, onSubmit, onCancel }) => {
           </div>
           
           {/* Botões */}
-          <div className="flex gap-3 pt-4">
+          <div className="form-actions">
             <button
               type="submit"
               disabled={isSubmitting}
-              className={`flex-1 ${initialData ? 'bg-yellow-500 hover:bg-yellow-600' : 'bg-blue-500 hover:bg-blue-600'} text-white font-bold py-2 px-4 rounded-lg transition-colors disabled:opacity-50`}
+              className="action-primary"
             >
-              {isSubmitting ? 'Salvando...' : (initialData ? '✏️ Atualizar' : '💾 Salvar')}
+              {isSubmitting ? 'Salvando...' : (initialData ? 'Atualizar cliente' : 'Salvar cliente')}
             </button>
             <button
               type="button"
               onClick={onCancel}
-              className="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded-lg transition-colors"
+              className="action-secondary"
             >
               Cancelar
             </button>

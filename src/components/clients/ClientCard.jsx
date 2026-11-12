@@ -1,68 +1,24 @@
-/**
- * COMPONENTE: ClientCard
- * 
- * Exibe as informações de um cliente em formato de card
- * Inclui botões de editar e deletar (Conectado ao Spring Boot)
- */
+import Icon from '../layout/Icon';
 
-const ClientCard = ({ client, onEdit, onDelete }) => {
-  return (
-    <div className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow duration-200 overflow-hidden">
-      {/* Cabeçalho do card - cor baseada no tipo de cliente */}
-      <div className={`px-4 py-3 ${
-        client.tipo === 'PARTICULAR' ? 'bg-blue-500' : 'bg-green-500'
-      } text-white`}>
-        <div className="flex justify-between items-center">
-          <div className="flex items-center gap-2">
-            <span className="text-2xl">{client.tipo === 'PARTICULAR' ? '👤' : '🏢'}</span>
-            <span className="font-semibold">{client.nome}</span>
-          </div>
-          <span className="text-xs bg-white bg-opacity-30 px-2 py-1 rounded-full">
-            ID: {client.id}
-          </span>
-        </div>
+const ClientCard = ({ client, onEdit, onDelete }) => (
+  <article className="record-card">
+    <header className="record-card-top">
+      <div className="record-card-identity">
+        <span className="record-icon"><Icon name={client.tipo === 'PARTICULAR' ? 'user' : 'users'} size={16} /></span>
+        <span className="record-title">{client.nome || 'Cliente sem nome'}<small className="record-subtitle">{client.tipo === 'PARTICULAR' ? 'Pessoa física' : 'Empresa / frota'}</small></span>
       </div>
-      
-      {/* Corpo do card */}
-      <div className="p-4 space-y-2">
-        {/* Email */}
-        <div className="flex items-center gap-2 text-gray-600">
-          <span className="text-sm">📧</span>
-          <span className="text-sm truncate">{client.email}</span>
-        </div>
-        
-        {/* Telefone */}
-        <div className="flex items-center gap-2 text-gray-600">
-          <span className="text-sm">📞</span>
-          <span className="text-sm">{client.telefone}</span>
-        </div>
-        
-        {/* Endereço (se existir) */}
-        {client.endereco && (
-          <div className="flex items-center gap-2 text-gray-600">
-            <span className="text-sm">📍</span>
-            <span className="text-sm truncate">{client.endereco}</span>
-          </div>
-        )}
-      </div>
-      
-      {/* Botões de ação */}
-      <div className="px-4 py-3 bg-gray-50 flex justify-end gap-2 border-t">
-        <button
-          onClick={() => onEdit(client)}
-          className="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded-lg text-sm transition-colors flex items-center gap-1"
-        >
-          ✏️ Editar
-        </button>
-        <button
-          onClick={() => onDelete(client.id)}
-          className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded-lg text-sm transition-colors flex items-center gap-1"
-        >
-          🗑️ Excluir
-        </button>
-      </div>
+      <span className="record-tag">#{client.id}</span>
+    </header>
+    <div className="record-card-body">
+      <div className="record-detail"><Icon name="mail" size={14} /><span title={client.email}>{client.email || 'E-mail não informado'}</span></div>
+      <div className="record-detail"><Icon name="phone" size={14} /><span>{client.telefone || 'Telefone não informado'}</span></div>
+      {client.endereco && <div className="record-detail"><Icon name="pin" size={14} /><span title={client.endereco}>{client.endereco}</span></div>}
     </div>
-  );
-};
+    <footer className="record-card-actions">
+      <button className="action-quiet" onClick={() => onEdit(client)}><Icon name="spark" size={13} /> Editar</button>
+      <button className="action-danger" onClick={() => onDelete(client.id)}><Icon name="trash" size={13} /> Excluir</button>
+    </footer>
+  </article>
+);
 
 export default ClientCard;

@@ -4,51 +4,29 @@
  * Formulário para cadastrar ou editar um veículo
  */
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { validateRequired } from '../../utils/validators';
 import { loadData, STORAGE_KEYS } from '../../services/localStorageService';
+import Icon from '../layout/Icon';
 
 const VehicleForm = ({ initialData, onSubmit, onCancel }) => {
     // Estados do formulário
-    const [formData, setFormData] = useState({
-        placa: '',
-        modelo: '',
-        marca: '',
-        ano: '',
-        cor: '',
-        vehicleType: 'carro',
-        status: 'ativo',
-        clientId: '',
-        clientName: ''
-    });
+    const [formData, setFormData] = useState(() => ({
+        placa: initialData?.placa || '',
+        modelo: initialData?.modelo || '',
+        marca: initialData?.marca || '',
+        ano: initialData?.ano || '',
+        cor: initialData?.cor || '',
+        vehicleType: initialData?.vehicleType || 'carro',
+        status: initialData?.status || 'aguardando',
+        clientId: initialData?.clientId || '',
+        clientName: initialData?.clientName || ''
+    }));
 
     // Lista de clientes para vincular o veículo
-    const [clients, setClients] = useState([]);
+    const [clients] = useState(() => loadData(STORAGE_KEYS.CLIENTS));
     const [errors, setErrors] = useState({});
     const [isSubmitting, setIsSubmitting] = useState(false);
-
-    // Carrega a lista de clientes
-    useEffect(() => {
-        const storedClients = loadData(STORAGE_KEYS.CLIENTS);
-        setClients(storedClients);
-    }, []);
-
-    // Se tiver dados iniciais (edição), preenche o formulário
-    useEffect(() => {
-        if (initialData) {
-            setFormData({
-                placa: initialData.placa || '',
-                modelo: initialData.modelo || '',
-                marca: initialData.marca || '',
-                ano: initialData.ano || '',
-                cor: initialData.cor || '',
-                vehicleType: initialData.vehicleType || 'carro',
-                status: initialData.status || 'ativo',
-                clientId: initialData.clientId || '',
-                clientName: initialData.clientName || ''
-            });
-        }
-    }, [initialData]);
 
     // Atualiza um campo específico do formulário
     const handleChange = (e) => {
@@ -69,7 +47,7 @@ const VehicleForm = ({ initialData, onSubmit, onCancel }) => {
         setFormData(prev => ({
             ...prev,
             clientId: clientId,
-            clientName: selectedClient ? selectedClient.name : ''
+            clientName: selectedClient ? (selectedClient.nome || selectedClient.name || '') : ''
         }));
     };
 
@@ -118,17 +96,18 @@ const VehicleForm = ({ initialData, onSubmit, onCancel }) => {
     };
 
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-lg shadow-xl w-full max-w-md max-h-screen overflow-y-auto">
-                {/* Cabeçalho */}
-                <div className={`px-6 py-4 ${initialData ? 'bg-yellow-500' : 'bg-green-600'} text-white`}>
-                    <h3 className="text-lg font-semibold">
-                        {initialData ? '✏️ Editar Veículo' : '🚗 Novo Veículo'}
-                    </h3>
+        <div className="dialog-overlay">
+            <div className="dialog-panel" role="dialog" aria-modal="true" aria-labelledby="vehicle-form-title">
+                <div className="dialog-header">
+                    <span className="dialog-header-mark"><Icon name="vehicle" size={18} /></span>
+                    <div>
+                        <h3 id="vehicle-form-title">{initialData ? 'Editar veículo' : 'Novo veículo'}</h3>
+                        <p>Identifique o veículo e vincule-o a um cliente.</p>
+                    </div>
                 </div>
 
                 {/* Formulário */}
-                <form onSubmit={handleSubmit} className="p-6 space-y-4">
+                <form onSubmit={handleSubmit} className="dialog-form">
                     {/* Placa */}
                     <div>
                         <label className="block text-gray-700 text-sm font-bold mb-2">
@@ -257,25 +236,25 @@ const VehicleForm = ({ initialData, onSubmit, onCancel }) => {
                             <option value="">-- Selecione um cliente --</option>
                             {clients.map(client => (
                                 <option key={client.id} value={client.id}>
-                                    {client.name}
+                                    {client.nome || client.name}
                                 </option>
                             ))}
                         </select>
                     </div>
 
                     {/* Botões */}
-                    <div className="flex gap-3 pt-4">
+                    <div className="form-actions">
                         <button
                             type="submit"
                             disabled={isSubmitting}
-                            className={`flex-1 ${initialData ? 'bg-yellow-500 hover:bg-yellow-600' : 'bg-green-600 hover:bg-green-700'} text-white font-bold py-2 px-4 rounded-lg transition-colors disabled:opacity-50`}
+                            className="action-primary"
                         >
-                            {isSubmitting ? 'Salvando...' : (initialData ? '✏️ Atualizar' : '💾 Salvar')}
+                            {isSubmitting ? 'Salvando...' : (initialData ? 'Atualizar veículo' : 'Salvar veículo')}
                         </button>
                         <button
                             type="button"
                             onClick={onCancel}
-                            className="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded-lg transition-colors"
+                            className="action-secondary"
                         >
                             Cancelar
                         </button>

@@ -4,64 +4,42 @@
  * Formulário para criar/editar uma Ordem de Serviço
  */
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { loadData, STORAGE_KEYS } from '../../services/localStorageService';
+import Icon from '../layout/Icon';
 
 const ServiceOrderForm = ({ initialData, onSubmit, onCancel }) => {
-  const [formData, setFormData] = useState({
-    clientId: '',
-    clientName: '',
-    vehicleId: '',
-    vehiclePlate: '',
-    vehicleModel: '',
-    services: [],
-    parts: [],
-    status: 'aberta',
-    total: 0,
-    description: ''
-  });
-  
-  const [clients, setClients] = useState([]);
-  const [vehicles, setVehicles] = useState([]);
-  const [filteredVehicles, setFilteredVehicles] = useState([]);
+  const [formData, setFormData] = useState(() => ({
+    clientId: initialData?.clientId || '',
+    clientName: initialData?.clientName || '',
+    vehicleId: initialData?.vehicleId || '',
+    vehiclePlate: initialData?.vehiclePlate || '',
+    vehicleModel: initialData?.vehicleModel || '',
+    services: initialData?.services || [],
+    parts: initialData?.parts || [],
+    status: initialData?.status || 'aberta',
+    total: initialData?.total || 0,
+    description: initialData?.description || ''
+  }));
+
+  const [clients] = useState(() => loadData(STORAGE_KEYS.CLIENTS));
+  const [vehicles] = useState(() => loadData(STORAGE_KEYS.VEHICLES));
+  const filteredVehicles = vehicles.filter((vehicle) =>
+    formData.clientId && vehicle.clientId?.toString() === formData.clientId.toString()
+  );
   const [newService, setNewService] = useState({ name: '', value: 0 });
   const [newPart, setNewPart] = useState({ name: '', value: 0 });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Carrega dados iniciais
-  useEffect(() => {
-    const storedClients = loadData(STORAGE_KEYS.CLIENTS);
-    const storedVehicles = loadData(STORAGE_KEYS.VEHICLES);
-    setClients(storedClients);
-    setVehicles(storedVehicles);
-  }, []);
-
-  // Preenche formulário se for edição - CORRIGIDO
-  useEffect(() => {
-    if (initialData) {
-      setFormData(initialData);
-      
-      // Se tem cliente selecionado, filtra os veículos daquele cliente
-      if (initialData.clientId) {
-        const clientVehicles = vehicles.filter(v => v.clientId?.toString() === initialData.clientId.toString());
-        setFilteredVehicles(clientVehicles);
-      }
-    }
-  }, [initialData, vehicles]); // Adicionado 'vehicles' como dependência
-
   // Quando seleciona um cliente, filtra os veículos daquele cliente
   const handleClientChange = (e) => {
     const clientId = e.target.value;
-    const selectedClient = clients.find(c => c.id.toString() === clientId);
-    
-    // Filtra veículos do cliente selecionado
-    const clientVehicles = vehicles.filter(v => v.clientId?.toString() === clientId);
-    setFilteredVehicles(clientVehicles);
+    const selectedClient = clients.find((client) => client.id?.toString() === clientId);
     
     setFormData(prev => ({
       ...prev,
       clientId: clientId,
-      clientName: selectedClient?.name || '',
+      clientName: selectedClient?.nome || selectedClient?.name || '',
       vehicleId: '',
       vehiclePlate: '',
       vehicleModel: ''
@@ -126,14 +104,6 @@ const ServiceOrderForm = ({ initialData, onSubmit, onCancel }) => {
     return servicesTotal + partsTotal;
   };
 
-  // Atualiza total sempre que serviços ou peças mudam
-  useEffect(() => {
-    setFormData(prev => ({
-      ...prev,
-      total: calculateTotal()
-    }));
-  }, [formData.services, formData.parts]);
-
   // Submete o formulário
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -141,6 +111,7 @@ const ServiceOrderForm = ({ initialData, onSubmit, onCancel }) => {
     
     const orderData = {
       ...formData,
+      total: calculateTotal(),
       updatedAt: Date.now()
     };
     
@@ -163,17 +134,18 @@ const ServiceOrderForm = ({ initialData, onSubmit, onCancel }) => {
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 overflow-y-auto">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl my-8">
-        {/* Cabeçalho */}
-        <div className={`px-6 py-4 ${initialData ? 'bg-yellow-500' : 'bg-blue-600'} text-white`}>
-          <h3 className="text-lg font-semibold">
-            {initialData ? '✏️ Editar Ordem de Serviço' : '📝 Nova Ordem de Serviço'}
-          </h3>
+    <div className="dialog-overlay">
+      <div className="dialog-panel dialog-panel-wide" role="dialog" aria-modal="true" aria-labelledby="service-order-form-title">
+        <div className="dialog-header">
+          <span className="dialog-header-mark"><Icon name="clipboard" size={18} /></span>
+          <div>
+            <h3 id="service-order-form-title">{initialData ? 'Editar ordem de serviço' : 'Nova ordem de serviço'}</h3>
+            <p>Registre o atendimento, os serviços e as peças utilizadas.</p>
+          </div>
         </div>
         
         {/* Formulário */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-4 max-h-[70vh] overflow-y-auto">
+        <form onSubmit={handleSubmit} className="dialog-form max-h-[70vh] overflow-y-auto">
           {/* Cliente */}
           <div>
             <label className="block text-gray-700 text-sm font-bold mb-2">
@@ -187,7 +159,7 @@ const ServiceOrderForm = ({ initialData, onSubmit, onCancel }) => {
             >
               <option value="">-- Selecione um cliente --</option>
               {clients.map(client => (
-                <option key={client.id} value={client.id}>{client.name}</option>
+                <option key={client.id} value={client.id}>{client.nome || client.name}</option>
               ))}
             </select>
           </div>
@@ -251,11 +223,9 @@ const ServiceOrderForm = ({ initialData, onSubmit, onCancel }) => {
           </div>
           
           {/* Serviços */}
-          <div className="border-t pt-4">
-            <label className="block text-gray-700 text-sm font-bold mb-2">
-              🔧 Serviços Realizados
-            </label>
-            <div className="flex gap-2 mb-2">
+          <div className="form-subsection">
+            <h4 className="form-subsection-title">Serviços realizados</h4>
+            <div className="form-entry-row">
               <input
                 type="text"
                 placeholder="Nome do serviço"
@@ -273,22 +243,23 @@ const ServiceOrderForm = ({ initialData, onSubmit, onCancel }) => {
               <button
                 type="button"
                 onClick={addService}
-                className="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600"
+                className="form-add-button"
               >
                 +
               </button>
             </div>
-            <div className="space-y-1">
+            <div className="form-entry-list">
               {formData.services.map(service => (
-                <div key={service.id} className="flex justify-between items-center bg-gray-50 p-2 rounded">
+                <div key={service.id} className="form-line-item">
                   <span>{service.name}</span>
                   <span>{formatMoney(service.value)}</span>
                   <button
                     type="button"
                     onClick={() => removeService(service.id)}
-                    className="text-red-500 hover:text-red-700"
+                    className="form-remove-button"
+                    aria-label={`Remover serviço ${service.name}`}
                   >
-                    ❌
+                    <Icon name="x" size={14} />
                   </button>
                 </div>
               ))}
@@ -296,11 +267,9 @@ const ServiceOrderForm = ({ initialData, onSubmit, onCancel }) => {
           </div>
           
           {/* Peças */}
-          <div className="border-t pt-4">
-            <label className="block text-gray-700 text-sm font-bold mb-2">
-              🔩 Peças Utilizadas
-            </label>
-            <div className="flex gap-2 mb-2">
+          <div className="form-subsection">
+            <h4 className="form-subsection-title">Peças utilizadas</h4>
+            <div className="form-entry-row">
               <input
                 type="text"
                 placeholder="Nome da peça"
@@ -318,22 +287,23 @@ const ServiceOrderForm = ({ initialData, onSubmit, onCancel }) => {
               <button
                 type="button"
                 onClick={addPart}
-                className="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600"
+                className="form-add-button"
               >
                 +
               </button>
             </div>
-            <div className="space-y-1">
+            <div className="form-entry-list">
               {formData.parts.map(part => (
-                <div key={part.id} className="flex justify-between items-center bg-gray-50 p-2 rounded">
+                <div key={part.id} className="form-line-item">
                   <span>{part.name}</span>
                   <span>{formatMoney(part.value)}</span>
                   <button
                     type="button"
                     onClick={() => removePart(part.id)}
-                    className="text-red-500 hover:text-red-700"
+                    className="form-remove-button"
+                    aria-label={`Remover peça ${part.name}`}
                   >
-                    ❌
+                    <Icon name="x" size={14} />
                   </button>
                 </div>
               ))}
@@ -341,26 +311,26 @@ const ServiceOrderForm = ({ initialData, onSubmit, onCancel }) => {
           </div>
           
           {/* Total */}
-          <div className="border-t pt-4 bg-gray-50 -mx-6 px-6 py-3">
+          <div className="form-total">
             <div className="flex justify-between items-center">
-              <span className="text-lg font-bold">💰 TOTAL DA OS:</span>
-              <span className="text-2xl font-bold text-green-600">{formatMoney(formData.total)}</span>
+              <span>Total da ordem</span>
+              <strong>{formatMoney(calculateTotal())}</strong>
             </div>
           </div>
           
           {/* Botões */}
-          <div className="flex gap-3 pt-4">
+          <div className="form-actions">
             <button
               type="submit"
               disabled={isSubmitting}
-              className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition-colors disabled:opacity-50"
+              className="action-primary"
             >
-              {isSubmitting ? 'Salvando...' : (initialData ? '✏️ Atualizar' : '💾 Salvar OS')}
+              {isSubmitting ? 'Salvando...' : (initialData ? 'Atualizar ordem' : 'Salvar ordem')}
             </button>
             <button
               type="button"
               onClick={onCancel}
-              className="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded-lg transition-colors"
+              className="action-secondary"
             >
               Cancelar
             </button>

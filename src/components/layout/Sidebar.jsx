@@ -1,103 +1,99 @@
-/**
- * COMPONENTE: Sidebar
- * 
- * Menu lateral de navegação
- * Responsivo: em mobile vira menu flutuante/hambúrguer
- */
+import Icon from './Icon';
 
-import { useState } from 'react';
+const menuSections = [
+  {
+    label: 'ESPAÇO DE TRABALHO',
+    items: [
+      { id: 'dashboard', label: 'Visão geral', icon: 'chart' },
+      { id: 'serviceOrders', label: 'Ordens de serviço', icon: 'clipboard', badge: 'OS' },
+      { id: 'vehicles', label: 'Veículos', icon: 'vehicle' }
+    ]
+  },
+  {
+    label: 'RELACIONAMENTO',
+    items: [{ id: 'clients', label: 'Clientes', icon: 'users' }]
+  },
+  {
+    label: 'ACOMPANHAMENTO',
+    items: [{ id: 'reports', label: 'Relatórios', icon: 'activity' }]
+  }
+];
 
-const Sidebar = ({ activePage, onPageChange }) => {
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-
-  // Itens do menu
-  const menuItems = [
-    { id: 'dashboard', label: 'Dashboard', icon: '📊', color: 'text-purple-600' },
-    { id: 'clients', label: 'Clientes', icon: '👥', color: 'text-blue-600' },
-    { id: 'vehicles', label: 'Veículos', icon: '🚗', color: 'text-green-600' },
-    { id: 'serviceOrders', label: 'Ordens de Serviço', icon: '📝', color: 'text-yellow-600' },
-    { id: 'reports', label: 'Relatórios', icon: '📈', color: 'text-red-600' },
-  ];
-
-  // Conteúdo do menu (reutilizado em desktop e mobile)
-  const MenuContent = () => (
-    <nav className="flex-1">
-      <ul className="space-y-1">
-        {menuItems.map((item) => (
-          <li key={item.id}>
-            <button
-              onClick={() => {
-                onPageChange(item.id);
-                setIsMobileMenuOpen(false);
-              }}
-              className={`
-                w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200
-                ${activePage === item.id 
-                  ? 'bg-blue-50 text-blue-700 border-l-4 border-blue-600' 
-                  : 'hover:bg-gray-50 text-gray-700 hover:translate-x-1'
-                }
-              `}
-            >
-              <span className={`text-xl ${item.color}`}>{item.icon}</span>
-              <span className="font-medium">{item.label}</span>
-            </button>
-          </li>
-        ))}
-      </ul>
-    </nav>
-  );
-
+const Sidebar = ({ activePage, onPageChange, isOpen, onClose }) => {
   return (
     <>
-      {/* Botão do menu mobile - aparece só em telas pequenas */}
-      <div className="lg:hidden fixed top-20 left-4 z-50">
-        <button
-          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-          className="bg-blue-600 text-white p-2 rounded-lg shadow-lg hover:bg-blue-700 transition-colors"
-        >
-          <span className="text-2xl">{isMobileMenuOpen ? '✕' : '☰'}</span>
-        </button>
-      </div>
+      <button
+        className={`sidebar-scrim ${isOpen ? 'is-visible' : ''}`}
+        onClick={onClose}
+        aria-label="Fechar menu"
+        aria-hidden={!isOpen}
+        tabIndex={isOpen ? 0 : -1}
+      />
+      <aside className={`sidebar ${isOpen ? 'sidebar-open' : ''}`}>
+        <div className="sidebar-brand-row">
+          <a
+            className="brand-lockup"
+            href="#"
+            onClick={(event) => {
+              event.preventDefault();
+              onPageChange('dashboard');
+              onClose();
+            }}
+          >
+            <span className="brand-mark"><Icon name="wrench" size={20} /></span>
+            <span className="brand-type"><strong>garagem<span>+</span></strong><small>GESTÃO AUTOMOTIVA</small></span>
+          </a>
+          <button className="sidebar-close-button" onClick={onClose} aria-label="Fechar menu">
+            <Icon name="x" size={19} />
+          </button>
+        </div>
 
-      {/* Sidebar para Desktop (LG e acima) */}
-      <aside className="hidden lg:block w-64 bg-white shadow-lg flex-shrink-0 h-screen sticky top-0 overflow-y-auto">
-        <div className="p-4 border-b">
-          <div className="flex items-center gap-2">
-            <span className="text-2xl">🚗</span>
-            <span className="font-bold text-gray-700">Menu Principal</span>
+        <div className="sidebar-workspace">
+          <span className="workspace-symbol"><Icon name="vehicle" size={17} /></span>
+          <span className="workspace-copy"><strong>Minha oficina</strong><small>Painel de gestão</small></span>
+          <span className="workspace-menu" aria-hidden="true">•••</span>
+        </div>
+
+        <nav className="sidebar-navigation" aria-label="Menu principal">
+          {menuSections.map((section) => (
+            <div key={section.label}>
+              <p className="nav-section-label">{section.label}</p>
+              {section.items.map((item) => (
+                <button
+                  key={item.id}
+                  onClick={() => {
+                    onPageChange(item.id);
+                    onClose();
+                  }}
+                  className={`nav-item ${activePage === item.id ? 'nav-item-active' : ''}`}
+                  aria-current={activePage === item.id ? 'page' : undefined}
+                >
+                  <Icon name={item.icon} size={19} />
+                  <span>{item.label}</span>
+                  {item.badge && <span className="nav-badge">{item.badge}</span>}
+                  {activePage === item.id && <span className="nav-active-mark" />}
+                </button>
+              ))}
+            </div>
+          ))}
+        </nav>
+
+        <div className="sidebar-bottom">
+          <div className="sidebar-help">
+            <span className="help-icon"><Icon name="spark" size={18} /></span>
+            <strong>O serviço nunca para.</strong>
+            <p>Uma gestão mais simples começa com a oficina organizada.</p>
+            <button onClick={() => {
+              onPageChange('dashboard');
+              onClose();
+            }}>Explorar painel <Icon name="arrow" size={14} /></button>
+          </div>
+          <div className="sidebar-footer">
+            <span className="footer-status"><span /> Sessão autenticada</span>
+            <span>GARAGEM+ <span>·</span> v1.0</span>
           </div>
         </div>
-        <div className="p-4">
-          <MenuContent />
-        </div>
       </aside>
-
-      {/* Menu Mobile - aparece só em telas pequenas */}
-      {isMobileMenuOpen && (
-        <>
-          <div 
-            className="lg:hidden fixed inset-0 bg-black bg-opacity-50 z-40"
-            onClick={() => setIsMobileMenuOpen(false)}
-          />
-          <aside className="lg:hidden fixed top-0 left-0 w-64 h-full bg-white shadow-xl z-50 transform transition-transform duration-300">
-            <div className="p-4 border-b flex justify-between items-center">
-              <div className="flex items-center gap-2">
-                <span className="text-2xl">🚗</span>
-                <span className="font-bold text-gray-700">Menu</span>
-              </div>
-              <button 
-                onClick={() => setIsMobileMenuOpen(false)}
-                className="text-gray-500 hover:text-gray-700"
-              >
-                <span className="text-xl">✕</span>
-              </button>
-            </div>
-            <div className="p-4">
-              <MenuContent />
-            </div>
-          </aside>
-        </>
-      )}
     </>
   );
 };

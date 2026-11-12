@@ -1,27 +1,27 @@
-/**
- * COMPONENTE: MainLayout
- * 
- * Layout principal que combina Header + Sidebar + Conteúdo
- * Totalmente responsivo
- */
-
+import { useState } from 'react';
 import Header from './Header';
 import Sidebar from './Sidebar';
 
-const MainLayout = ({ children, userName, onLogout, activePage, onPageChange }) => {
+const MainLayout = ({ children, userName, onLogout, activePage, pageTitle, onPageChange }) => {
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
   return (
-    <div className="min-h-screen flex flex-col">
-      <Header userName={userName} onLogout={onLogout} />
-      
-      <div className="flex flex-1">
-        <Sidebar 
-          activePage={activePage} 
-          onPageChange={onPageChange} 
+    <div className="app-shell">
+      <Sidebar
+        activePage={activePage}
+        onPageChange={onPageChange}
+        isOpen={isSidebarOpen}
+        onClose={() => setIsSidebarOpen(false)}
+      />
+      <div className="app-main">
+        <Header
+          userName={userName}
+          pageTitle={pageTitle}
+          onLogout={onLogout}
+          onMenuToggle={() => setIsSidebarOpen((open) => !open)}
+          isSidebarOpen={isSidebarOpen}
         />
-        
-        <main className="flex-1 p-4 md:p-6 overflow-auto mt-14 lg:mt-0">
-          {children}
-        </main>
+        <main className="workspace-content">{children}</main>
       </div>
     </div>
   );

@@ -1,138 +1,113 @@
-# 🚗 Sistema de Gestão de Oficina Mecânica
+# Garagem+ — Gestão automotiva
 
-Sistema completo para gerenciamento de oficina mecânica, desenvolvido com React e Vite.
+Aplicação web para organizar clientes, veículos e ordens de serviço de uma oficina mecânica. A interface foi construída com React e Vite; os dados locais de demonstração são salvos no navegador.
 
-## 📋 Funcionalidades
+## Funcionalidades
 
-- ✅ **Autenticação de usuário** (login com validação de email e senha forte)
-- ✅ **CRUD de Clientes** (Cadastrar, Listar, Editar, Excluir)
-- ✅ **CRUD de Veículos** (Cadastrar, Listar, Editar, Excluir)
-- ✅ **CRUD de Ordens de Serviço** (Cadastrar, Listar, Editar, Excluir)
-- ✅ **Persistência de dados** com LocalStorage
-- ✅ **Design responsivo** com Tailwind CSS (funciona em celular, tablet e desktop)
-- ✅ **Interface moderna** com menu lateral responsivo (hambúrguer no mobile)
+- Login de demonstração com validação de e-mail e senha e opção para mostrar ou ocultar a senha.
+- Painel inicial com indicadores e atalhos para as principais áreas.
+- Cadastro, consulta, edição e exclusão de clientes, veículos e ordens de serviço.
+- Pesquisa de clientes, veículos e ordens de serviço.
+- Interface adaptável a computadores e dispositivos móveis.
 
-## 🚀 Tecnologias Utilizadas
+> **Atenção:** o login desta versão é uma demonstração no frontend, e os dados ficam no navegador. Ele não substitui autenticação, autorização ou armazenamento seguros em um servidor de produção.
 
-| Tecnologia | Descrição |
-|------------|-----------|
-| React 18 | Biblioteca para construção da interface |
-| Vite | Build tool e servidor de desenvolvimento |
-| Tailwind CSS | Framework de CSS para estilização |
-| LocalStorage | Persistência de dados no navegador |
+## Tecnologias
 
-## 📦 Instalação e Execução
+- React 19
+- Vite
+- Tailwind CSS
+- JavaScript
+- LocalStorage para os dados locais
 
-### Pré-requisitos
+## Requisitos
 
-- Node.js (versão 16 ou superior)
-- npm (gerenciador de pacotes)
+- Node.js e npm. Consulte a versão recomendada pelo Vite para a versão instalada no projeto.
 
-### Passo a passo
+## Executar localmente
+
+Abra um terminal na pasta do projeto e execute:
 
 ```bash
-# 1. Clone o repositório
-git clone https://github.com/seu-usuario/gestao-oficina-mecanica.git
-
-# 2. Acesse a pasta do projeto
-cd gestao-oficina-mecanica
-
-# 3. Instale as dependências
 npm install
-
-# 4. Execute o projeto
 npm run dev
+```
 
-# 5. Acesse no navegador
-# http://localhost:5173
+O Vite informará o endereço local, normalmente `http://localhost:5173`.
 
+Para validar as alterações e preparar uma versão de produção:
 
+```bash
+npm run lint
+npm run build
+```
 
+## Acesso de demonstração
 
-# ESTRUTURA DO PROJETO #
-text
-src/
-├── components/
-│   ├── auth/          # Componentes de autenticação (LoginForm)
-│   ├── clients/       # Componentes de clientes (ClientCard, ClientForm)
-│   ├── layout/        # Layout (Header, Sidebar, MainLayout)
-│   ├── vehicles/      # Componentes de veículos (VehicleCard, VehicleForm)
-│   └── serviceOrders/ # Componentes de OS (ServiceOrderCard, ServiceOrderForm)
-├── pages/             # Páginas da aplicação
-├── services/          # Serviços (LocalStorage)
-├── utils/             # Utilitários (validações de email e senha)
-└── hooks/             # Hooks personalizados
+Na tela de login, use **Preencher acesso** para preencher a conta de demonstração:
 
+- E-mail: `admin@oficina.com`
+- Senha: `Admin123`
 
-________________________________________________________________________
+## Histórico de alterações
 
-           # FUNCIONALIDADES DETALHADAS #
+### 2026-11-11 — Redesenho do frontend
 
-        # Login
-Validação de email em tempo real
+- Introduzida a identidade visual **Garagem+**, incluindo novo favicon, cores, ícones e tipografia.
+- Reformulada a tela de login, com layout responsivo e preenchimento da conta de demonstração.
+- Renovados o painel inicial, a navegação lateral e o cabeçalho, incluindo menu adaptado a dispositivos móveis.
+- Atualizadas as telas e os cartões de clientes, veículos e ordens de serviço.
+- Padronizados os formulários de cadastro e edição e o resumo das ordens no painel.
+- Documentada no README a natureza de demonstração do login e do armazenamento local.
 
-Validação de senha forte (maiúscula, minúscula, número, 6+ caracteres)
+## Versionar alterações e recuperar uma versão
 
-Botão "olhinho" para mostrar/esconder senha
+O projeto usa Git. Cada **commit** é um ponto salvo do código: mantenha o commit anterior e crie outro quando quiser registrar um novo estado.
 
-Mensagens de erro amigáveis
-__________________________________________________________________________
+Depois de concluir uma alteração, revise e registre uma nova versão:
 
+```bash
+git status
+git diff
+git add -A
+git commit -m "Descreva a alteração"
+```
 
-        # Clientes
-Cadastro com nome, email, telefone, tipo (particular/empresa) e endereço
+Consulte as versões registradas:
 
-Listagem em cards organizados
+```bash
+git log --oneline
+```
 
-Busca por nome, email ou telefone
+Para **examinar uma versão anterior sem alterar o histórico**, substitua `<hash>` pelo identificador exibido no log:
 
-Edição e exclusão com confirmação
-__________________________________________________________________________
+```bash
+git switch --detach <hash>
+```
 
+Depois, volte à versão mais recente da branch principal:
 
-        # Veículos
-Cadastro com placa, modelo, marca, ano, cor e tipo (carro/moto/caminhão)
+```bash
+git switch main
+```
 
-Status: ⏳ Aguardando serviço, 🔧 Em manutenção, ✅ Serviço concluído
+Para **desfazer um commit publicado sem apagar o histórico**, crie um novo commit que reverta as alterações:
 
-Vínculo com cliente (opcional)
+```bash
+git revert <hash>
+```
 
-Busca por placa, modelo ou marca
-__________________________________________________________________________
+O `git revert` preserva os commits existentes. Já `git reset --hard` pode descartar alterações do projeto e não faz parte deste fluxo.
 
+Os commits ficam no computador. Para guardar também uma cópia no GitHub e atualizar o repositório remoto:
 
-        # Ordens de Serviço
-Vinculação com cliente e veículo
+```bash
+git push origin main
+```
 
-Adição de serviços e peças com valores
+O envio atualiza o repositório GitHub e pode publicar o código para outras pessoas. Confirme se está na conta e no repositório corretos antes de enviar.
 
-Cálculo automático do total
+## Autores
 
-Status: 🟡 Aberta, 🔵 Em andamento, ✅ Concluída
-
-Busca por cliente ou placa do veículo
-___________________________________________________________________________
-
-
-        # Responsividade
-O sistema se adapta a diferentes tamanhos de tela:
-
-📱 Mobile: Menu hambúrguer, cards em 1 coluna
-
-💻 Tablet: Menu lateral visível, cards em 2 colunas
-
-🖥️ Desktop: Menu lateral visível, cards em 3 colunas
-
-
-
-
-____________________________________________________________________________
-----------------------------------------------------------------------------
-
-                               # Autores
-                 * DOUGLAS INACIO & * Eric Albuquerque
-
-----------------------------------------------------------------------------
-_____________________________________________________________________________
-
-
+- Douglas Inacio
+- Eric Albuquerque
