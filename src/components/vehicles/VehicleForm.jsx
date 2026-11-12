@@ -4,9 +4,9 @@
  * Formulário para cadastrar ou editar um veículo
  */
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { validateRequired } from '../../utils/validators';
-import { loadData, STORAGE_KEYS } from '../../services/localStorageService';
+import { clienteService } from '../../services/api';
 import Icon from '../layout/Icon';
 
 const VehicleForm = ({ initialData, onSubmit, onCancel }) => {
@@ -24,9 +24,30 @@ const VehicleForm = ({ initialData, onSubmit, onCancel }) => {
     }));
 
     // Lista de clientes para vincular o veículo
-    const [clients] = useState(() => loadData(STORAGE_KEYS.CLIENTS));
+    const [clients, setClients] = useState([]);
+    const [isLoadingClients, setIsLoadingClients] = useState(true);
+    const [clientLoadError, setClientLoadError] = useState('');
     const [errors, setErrors] = useState({});
     const [isSubmitting, setIsSubmitting] = useState(false);
+
+    useEffect(() => {
+        let isCurrent = true;
+
+        clienteService.listar()
+            .then((data) => {
+                if (isCurrent) setClients(data);
+            })
+            .catch(() => {
+                if (isCurrent) setClientLoadError('Não foi possível carregar os clientes. Verifique a conexão com o servidor.');
+            })
+            .finally(() => {
+                if (isCurrent) setIsLoadingClients(false);
+            });
+
+        return () => {
+            isCurrent = false;
+        };
+    }, []);
 
     // Atualiza um campo específico do formulário
     const handleChange = (e) => {
@@ -231,15 +252,22 @@ const VehicleForm = ({ initialData, onSubmit, onCancel }) => {
                             name="clientId"
                             value={formData.clientId}
                             onChange={handleClientChange}
+                            disabled={isLoadingClients}
                             className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-400"
                         >
-                            <option value="">-- Selecione um cliente --</option>
+                            <option value="">
+                                {isLoadingClients ? 'Carregando clientes...' : '-- Selecione um cliente --'}
+                            </option>
+                            {formData.clientId && !clients.some((client) => client.id?.toString() === formData.clientId.toString()) && (
+                                <option value={formData.clientId}>{formData.clientName || 'Cliente vinculado'}</option>
+                            )}
                             {clients.map(client => (
                                 <option key={client.id} value={client.id}>
                                     {client.nome || client.name}
                                 </option>
                             ))}
                         </select>
+                        {clientLoadError && <p className="form-error" role="alert">{clientLoadError}</p>}
                     </div>
 
                     {/* Botões */}

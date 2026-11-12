@@ -4,9 +4,10 @@
  * Formulário para criar/editar uma Ordem de Serviço
  */
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { loadData, STORAGE_KEYS } from '../../services/localStorageService';
 import Icon from '../layout/Icon';
+import { clienteService } from '../../services/api';
 
 const ServiceOrderForm = ({ initialData, onSubmit, onCancel }) => {
   const [formData, setFormData] = useState(() => ({
@@ -22,7 +23,9 @@ const ServiceOrderForm = ({ initialData, onSubmit, onCancel }) => {
     description: initialData?.description || ''
   }));
 
-  const [clients] = useState(() => loadData(STORAGE_KEYS.CLIENTS));
+  const [clients, setClients] = useState([]);
+  const [isLoadingClients, setIsLoadingClients] = useState(true);
+  const [clientLoadError, setClientLoadError] = useState('');
   const [vehicles] = useState(() => loadData(STORAGE_KEYS.VEHICLES));
   const filteredVehicles = vehicles.filter((vehicle) =>
     formData.clientId && vehicle.clientId?.toString() === formData.clientId.toString()
@@ -30,6 +33,25 @@ const ServiceOrderForm = ({ initialData, onSubmit, onCancel }) => {
   const [newService, setNewService] = useState({ name: '', value: 0 });
   const [newPart, setNewPart] = useState({ name: '', value: 0 });
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    let isCurrent = true;
+
+    clienteService.listar()
+      .then((data) => {
+        if (isCurrent) setClients(data);
+      })
+      .catch(() => {
+        if (isCurrent) setClientLoadError('Não foi possível carregar os clientes. Verifique a conexão com o servidor.');
+      })
+      .finally(() => {
+        if (isCurrent) setIsLoadingClients(false);
+      });
+
+    return () => {
+      isCurrent = false;
+    };
+  }, []);
 
   // Quando seleciona um cliente, filtra os veículos daquele cliente
   const handleClientChange = (e) => {
@@ -155,13 +177,20 @@ const ServiceOrderForm = ({ initialData, onSubmit, onCancel }) => {
               value={formData.clientId}
               onChange={handleClientChange}
               required
+              disabled={isLoadingClients}
               className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
             >
-              <option value="">-- Selecione um cliente --</option>
+              <option value="">
+                {isLoadingClients ? 'Carregando clientes...' : '-- Selecione um cliente --'}
+              </option>
+              {formData.clientId && !clients.some((client) => client.id?.toString() === formData.clientId.toString()) && (
+                <option value={formData.clientId}>{formData.clientName || 'Cliente vinculado'}</option>
+              )}
               {clients.map(client => (
                 <option key={client.id} value={client.id}>{client.nome || client.name}</option>
               ))}
             </select>
+            {clientLoadError && <p className="form-error" role="alert">{clientLoadError}</p>}
           </div>
           
           {/* Veículo */}

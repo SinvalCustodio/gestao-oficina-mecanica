@@ -51,6 +51,13 @@ Na tela de login, use **Preencher acesso** para preencher a conta de demonstraç
 
 ## Histórico de alterações
 
+### 2026-11-12 — Execução e verificação
+
+- Corrigida a origem dos clientes nos formulários de veículos e ordens de serviço: ambos agora consultam a API usada pela tela de clientes e apresentam estados de carregamento e erro.
+- Ajustadas as configurações de execução e depuração do VS Code para iniciar o Vite na porta `5173`.
+- `npm run lint` e `npm run build` concluídos com sucesso; o fluxo de veículo e ordem foi verificado no navegador com uma resposta de API simulada.
+- A API real em `http://localhost:8080/api` não estava disponível durante a verificação. O projeto não possui um script `npm test` configurado.
+
 ### 2026-11-11 — Documentação e versionamento
 
 - Atualizado o histórico do README e preservados os créditos dos três autores.
