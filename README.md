@@ -109,5 +109,6 @@ O envio atualiza o repositório GitHub e pode publicar o código para outras pes
 
 ## Autores
 
-- Douglas Inacio
+- Douglas Inácio
 - Eric Albuquerque
+- Sinval Custodio
