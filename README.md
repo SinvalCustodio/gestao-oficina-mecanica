@@ -51,6 +51,12 @@ Na tela de login, use **Preencher acesso** para preencher a conta de demonstraç
 
 ## Histórico de alterações
 
+### 2026-11-11 — Documentação e versionamento
+
+- Atualizado o histórico do README e preservados os créditos dos três autores.
+- Documentado o fluxo Git para registrar alterações, consultar versões anteriores e desfazer commits sem apagar o histórico.
+- Salvas as alterações em versões locais e sincronizadas com o repositório no GitHub.
+
 ### 2026-11-11 — Redesenho do frontend
 
 - Introduzida a identidade visual **Garagem+**, incluindo novo favicon, cores, ícones e tipografia.
